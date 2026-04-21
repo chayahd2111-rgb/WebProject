@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ThoughtGalaxy</title>
+
+<div style="text-align:center; margin-bottom:10px;">
+  <button onclick="showGalaxy()">🌌 Galaxy View</button>
+  <button onclick="showMap()">🌍 Map View</button>
+</div>
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  display: flex;
+  background: radial-gradient(circle at center, #9ab2da, #020617);
+  color: white;
+}
+
+/* LEFT SIDE */
+#left {
+  width: 70%;
+  padding: 20px;
+}
+
+#canvas {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+}
+
+/* RIGHT SIDE */
+#right {
+  width: 30%;
+  background: rgba(255,255,255,0.05);
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+}
+
+input {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  width: 200px;
+}
+
+button {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #6366f1;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #4f46e5;
+}
+
+/* NODES */
+.node {
+  position: absolute;
+  padding: 10px 15px;
+  background: #22c55e;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.3s;
+}
+
+.node:hover {
+  transform: scale(1.1);
+}
+
+/* CENTER NODE */
+.center {
+  background: #f59e0b;
+  font-weight: bold;
+  transform: scale(1.2);
+}
+
+/* LINES */
+svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+</head>
+<body>
+ <div id=""GalaxyView">
+<div id="left">
+   
+  <h1>Semantic News Navigator</h1>
+
+  <input type="text" id="topicInput" placeholder="Enter topic">
+  <button onclick="generateMap()">Explore</button>
+
+  <div id="canvas">
+    <svg id="lines"></svg>
+  </div>
+</div>
+
+<div id="right">
+  <h2>Details</h2>
+  <p id="infoBox">Click a node or connection</p>
+</div>
+</div>
+
+<script>
+    let selectedTrend = null;
+// ✅ DOCUMENTS DATA
+const documents = [
+  "AI in education is growing",
+  "Machine learning improves automation",
+  "AI impacts jobs",
+  "Climate change is serious",
+  "Education is changing with technology",
+  "AI is transforming healthcare",
+  "Automation affects industries",
+  "Renewable energy helps climate change",
+  "Technology is shaping the future",
+  "Data science is important in AI"
+];
+
+const trendingTopics = [
+  "AI Revolution",
+  "Climate Crisis",
+  "Space Exploration",
+  "Quantum Computing",
+  "Stock Market",
+  "Electric Vehicles",
+  "ChatGPT",
+  "Cyber Security"
+];
+
+function generateMapView() {
+  const svg = document.getElementById("map");
+  svg.innerHTML = "";
+
+  const width = 800;
+  const height = 600;
+  const padding = 60;
+
+  trendingTopics.forEach((topic) => {
+
+    const x = Math.random() * (width - 2 * padding) + padding;
+    const y = Math.random() * (height - 2 * padding) + padding;
+
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", x);
+    circle.setAttribute("cy", y);
+    circle.setAttribute("r", 10);
+    circle.setAttribute("fill", "#22c55e");
+
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", x + 12);
+    text.setAttribute("y", y + 5);
+    text.setAttribute("fill", "white");
+    text.textContent = topic;
+
+    group.onclick = () => {
+      selectedTrend = topic;
+      showTrendInfo(topic);
+    };
+
+    group.appendChild(circle);
+    group.appendChild(text);
+    svg.appendChild(group);
+  });
+}
+
+function showTrendInfo(topic) {
+  document.getElementById("infoBox").innerText =
+    "🔥 Trending Topic: " + topic +
+    "\n\nSelected topic is now locked. Explore related insights in Galaxy view.";
+}
+
+
+// 🚀 MAIN FUNCTION
+function generateMap() {
+  const topic = document.getElementById("topicInput").value.toLowerCase();
+  const canvas = document.getElementById("canvas");
+
+  canvas.innerHTML = '<svg id="lines"></svg>';
+
+  const centerX = canvas.offsetWidth/2 ;
+  const centerY = canvas.offsetHeight/2  ;
+
+  // CENTER NODE
+  createNode(topic.toUpperCase(), centerX, centerY, null, true);
+
+  let related = documents.filter(d => d.toLowerCase().includes(topic));
+  if (related.length === 0) related = documents.slice(0,5);
+
+  const radius = 240;
+
+  related.forEach((text, i) => {
+    const angle = (i / related.length) * 2 * Math.PI;
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+
+    createNode(text, x, y);
+
+    drawLine(centerX, centerY, x, y, topic, text);
+  });
+}
+
+// 🟢 CREATE NODE
+function createNode(text, x, y, parent=null, isCenter=false) {
+  const node = document.createElement("div");
+  node.className = "node";
+
+  if(isCenter) {
+    node.classList.add("center");
+  }
+
+  node.innerText = text;
+  node.style.left = (x-50) + "px"
+  node.style.top = (y-20) + "px"
+  // ONLY show topic info
+  node.onclick = () => {
+    showExplanation(text);
+  };
+
+  document.getElementById("canvas").appendChild(node);
+}
+
+// 🔗 DRAW LINE
+function drawLine(x1, y1, x2, y2, a, b) {
+  const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+
+  line.setAttribute("x1", x1 );
+  line.setAttribute("y1", y1 );
+  line.setAttribute("x2", x2 );
+  line.setAttribute("y2", y2 );
+
+  line.setAttribute("stroke", "white");
+  line.setAttribute("stroke-width", "2");
+
+  // ONLY connection explanation
+  line.onmouseover = () => showConnection(a, b);
+  line.onmouseout = () => {
+  document.getElementById("infoBox").innerText =
+    "Move over connections or click nodes to explore";
+};
+
+  document.getElementById("lines").appendChild(line);
+}
+
+// 🧠 NODE INFO
+function showExplanation(text) {
+  document.getElementById("infoBox").innerText =
+    "📌 " + text + "\n\nThis topic is relevant in current discussions and plays an important role in its domain.";
+}
+
+// 🔗 CONNECTION INFO
+function showConnection(a, b) {
+  document.getElementById("infoBox").innerText =
+    "🔗 Why are these connected?\n\n" +
+    a + " and " + b + " are related because they influence each other in real-world scenarios and share conceptual relevance.";
+}
+function showGalaxy() {
+  document.getElementById("left").style.display = "block";
+  document.getElementById("right").style.display = "block";
+  document.getElementById("mapView").style.display = "none";
+}
+setInterval(() => {
+  if (document.getElementById("mapView").style.display === "block") {
+    generateMapView();
+  }
+}, 4000);
+
+const padding = 60;
+
+const x = Math.random() * (width - 2 * padding) + padding;
+const y = Math.random() * (height - 2 * padding) + padding;
+
+function showMap() {
+  document.getElementById("left").style.display = "none";
+  document.getElementById("right").style.display = "none";
+  document.getElementById("mapView").style.display = "block";
+
+  generateMapView(); // must run ONCE
+}
+
+</script>
+<!-- 🌍 MAP VIEW (NEW FEATURE) -->
+<div id="mapView" style="display:none; text-align:center; margin-top:20px;">
+
+  <h2>🌍 Live News Map</h2>
+
+  
+    <svg id="map" width="1000" height="600"></svg>
+  </div>
+
+</div>
+
+</body>
+</html>

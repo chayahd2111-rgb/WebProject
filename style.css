@@ -1,0 +1,16 @@
+.trend-dot {
+  .trend-dot {
+  cursor: pointer;
+}
+  cursor: pointer;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+circle {
+  filter: drop-shadow(0px 0px 6px #22c55e);
+  cursor: pointer;
+}
